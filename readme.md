@@ -1,6 +1,6 @@
 # Tool Hub
 
-Browser-based document utilities for English and Malayalam DOCX cleanup, PDF/image conversion, HTML merging, and HTML editing with a live preview. The English DOCX Cleaner removes soft hyphens, blank paragraphs, and extra spaces while preserving the original file and processing it in the browser.
+Browser-based document utilities for English and Malayalam DOCX cleanup, PDF/image conversion, and HTML merging. The English DOCX Cleaner removes soft hyphens, blank paragraphs, and extra spaces while preserving the original file and processing it in the browser.
 
 ## Public information pages
 
@@ -9,10 +9,6 @@ The site publishes standalone `about.html`, `contact.html`, `privacy.html`, and 
 ## Malayalam Proofreader + OCR
 
 The tool is available at `malayalam-proofreader.html`. OCR runs in the visitor's browser using Tesseract.js; its Malayalam language data is downloaded from the library's CDN on first use. AI proofreading is currently unavailable. Text and OCR images are not sent to an AI service.
-
-## HTML Editor & Viewer
-
-The tool is available at `html-editor.html`. It edits and previews HTML locally in the browser, and can open and export HTML files. The live preview is sandboxed from the Tool Hub page, but code entered into it can run and load external resources.
 
 ## GitHub Pages deployment
 
