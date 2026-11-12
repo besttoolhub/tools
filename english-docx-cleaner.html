@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>English DOCX Cleaner</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#eef1f5;--surface:#ffffff;--ink:#17202e;--muted:#5b6678;--line:#d3d9e2;--accent:#2f4fd1;--accent-ink:#ffffff;--ok:#1d7a4d;--err:#b3261e;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0f141c;--surface:#171e29;--ink:#e6eaf1;--muted:#9aa5b8;--line:#2a3443;--accent:#7f98ff;--accent-ink:#0f141c;--ok:#5fd397;--err:#ff8a80}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0f141c;--surface:#171e29;--ink:#e6eaf1;--muted:#9aa5b8;--line:#2a3443;--accent:#7f98ff;--accent-ink:#0f141c;--ok:#5fd397;--err:#ff8a80}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:640px;margin:0 auto;padding:32px 18px 56px}
+.back{display:inline-block;margin-bottom:18px;color:var(--accent);font-size:.92rem;text-decoration:none}
+.back:hover{text-decoration:underline}
+h1{font-size:1.7rem;line-height:1.2;margin:0 0 6px;font-weight:600;letter-spacing:-.01em}
+.lead{color:var(--muted);margin:0 0 24px;max-width:56ch}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;margin-bottom:16px}
+.drop{display:block;border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;color:var(--muted);transition:border-color .15s,background .15s}
+.drop:hover,.drop.over,.drop:focus-within{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 6%,transparent)}
+.drop strong{display:block;color:var(--ink);font-weight:500;margin-bottom:2px;overflow-wrap:anywhere}
+.drop input{position:absolute;opacity:0;width:1px;height:1px}
+fieldset{border:0;padding:0;margin:0}
+legend{font-weight:600;margin-bottom:10px;padding:0}
+.opt{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
+.opt:first-of-type{border-top:0}
+.opt input{margin-top:5px;width:18px;height:18px;accent-color:var(--accent);flex:none}
+.opt b{font-weight:500;display:block}
+.opt span{color:var(--muted);font-size:.9rem}
+button{font:inherit;font-weight:500;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);padding:11px 20px;cursor:pointer}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.ghost{background:transparent;color:var(--accent)}
+button:focus-visible,.drop:focus-within{outline:3px solid color-mix(in srgb,var(--accent) 55%,transparent);outline-offset:2px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+#result{display:none}
+#result h2{font-size:1.05rem;margin:0 0 12px}
+dl{display:grid;grid-template-columns:1fr auto;gap:6px 16px;margin:0 0 16px}
+dt{color:var(--muted)}dd{margin:0;font-weight:600;font-variant-numeric:tabular-nums}
+.msg{margin:12px 0 0;font-size:.92rem}.msg.ok{color:var(--ok)}.msg.err{color:var(--err)}
+.note{color:var(--muted);font-size:.85rem;margin-top:8px}
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="./">← Back to all tools</a>
+  <h1>English DOCX Cleaner</h1>
+  <p class="lead">Removes soft hyphens, blank paragraphs and extra spaces from a .docx file. Only those spots are edited, so your wording, fonts and layout stay as they are. The file never leaves your browser.</p>
+
+  <div class="panel">
+    <label class="drop" id="drop">
+      <strong id="fname">Choose a .docx file</strong>
+      <span id="fhint">or drop it here</span>
+      <input type="file" id="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+    </label>
+  </div>
+
+  <div class="panel">
+    <fieldset>
+      <legend>What to clean</legend>
+      <label class="opt"><input type="checkbox" id="oLines" checked>
+        <div><b>Change Shift+Enter line breaks into paragraph breaks</b><span>Each manual line break splits the paragraph in two. Fonts and formatting carry over to both parts.</span></div></label>
+      <label class="opt"><input type="checkbox" id="oJoin" checked>
+        <div><b>Join paragraphs split at a soft hyphen</b><span>If a paragraph ends with a soft hyphen, the next paragraph is merged into it and the word is rejoined.</span></div></label>
+      <label class="opt"><input type="checkbox" id="oSoft" checked>
+        <div><b>Remove remaining soft hyphens</b><span>Deletes hidden soft hyphens (Ctrl+Shift+-) left inside words.</span></div></label>
+      <label class="opt"><input type="checkbox" id="oBlank" checked>
+        <div><b>Remove blank lines between paragraphs</b><span>Deletes empty paragraphs. Page breaks, images, section breaks and the last paragraph of a table cell are kept.</span></div></label>
+      <label class="opt"><input type="checkbox" id="oSpace" checked>
+        <div><b>Replace multiple spaces with a single space</b><span>Two or more spaces in a row between words become one, even when the spaces sit in different formatted pieces of text. Tabs are kept.</span></div></label>
+      <label class="opt"><input type="checkbox" id="oTrim" checked>
+        <div><b>Remove spaces at the start and end of paragraphs</b><span>Deletes stray spaces before the first word and after the last word of each paragraph.</span></div></label>
+      <label class="opt"><input type="checkbox" id="oHard">
+        <div><b>Also join at a normal hyphen when the next line starts in lowercase</b><span>For text pasted from PDFs, such as “inter-” followed by “national”. This can wrongly join real hyphenated words, so it is off by default.</span></div></label>
+    </fieldset>
+    <div class="row" style="margin-top:16px"><button id="go" disabled>Clean document</button></div>
+    <p class="msg" id="status" role="status"></p>
+  </div>
+
+  <div class="panel" id="result">
+    <h2>Result</h2>
+    <dl>
+      <dt>Line breaks changed to paragraph breaks</dt><dd id="sLines">0</dd>
+      <dt>Paragraphs joined</dt><dd id="sJoin">0</dd>
+      <dt>Soft hyphens removed</dt><dd id="sSoft">0</dd>
+      <dt>Blank paragraphs removed</dt><dd id="sBlank">0</dd>
+      <dt>Extra spaces removed</dt><dd id="sSpace">0</dd>
+    </dl>
+    <div class="row"><button id="save">Download cleaned file</button></div>
+    <p class="note">Tip: open the result in Word and check it once. Your original file is not changed.</p>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+(function(){
+var W='http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+var $=function(id){return document.getElementById(id)};
+var file=null,outBlob=null,outName='cleaned.docx';
+
+function setStatus(t,c){var s=$('status');s.textContent=t;s.className='msg '+(c||'')}
+function pick(f){
+  if(!f)return;
+  if(!/\.docx$/i.test(f.name)){setStatus('Please choose a .docx file.','err');return}
+  file=f;outBlob=null;$('result').style.display='none';
+  $('fname').textContent=f.name;$('fhint').textContent=(f.size/1024).toFixed(0)+' KB. Choose another to replace it.';
+  $('go').disabled=false;setStatus('');
+}
+$('file').addEventListener('change',function(e){pick(e.target.files[0])});
+var drop=$('drop');
+['dragenter','dragover'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.add('over')})});
+['dragleave','drop'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.remove('over')})});
+drop.addEventListener('drop',function(e){pick(e.dataTransfer.files[0])});
+
+function named(el,n){return el.namespaceURI===W&&el.localName===n}
+function texts(p){return Array.prototype.filter.call(p.getElementsByTagNameNS(W,'t'),function(t){return t.textContent!==''})}
+function fullText(p){return Array.prototype.map.call(p.getElementsByTagNameNS(W,'t'),function(t){return t.textContent}).join('')}
+var KEEP=['drawing','pict','object','sectPr','fldChar','fldSimple','footnoteReference','endnoteReference','commentReference','sym','oMath','oMathPara','bookmarkStart','numPr'];
+function isBlank(p){
+  if(fullText(p).replace(/[\s\u00A0\u00AD]/g,'')!=='')return false;
+  for(var i=0;i<KEEP.length;i++)if(p.getElementsByTagNameNS(W,KEEP[i]).length)return false;
+  var br=p.getElementsByTagNameNS(W,'br');
+  for(var j=0;j<br.length;j++){var t=br[j].getAttributeNS(W,'type');if(t==='page'||t==='column')return false}
+  return true;
+}
+function hasSect(p){return p.getElementsByTagNameNS(W,'sectPr').length>0}
+function setT(t,v){t.textContent=v;t.setAttribute('xml:space','preserve')}
+
+// last visible item in paragraph: a soft hyphen element, or the last non-empty text node
+function lastItem(p){
+  var last=null,all=p.getElementsByTagName('*');
+  for(var i=0;i<all.length;i++){
+    var n=all[i];
+    if(named(n,'softHyphen'))last=n;
+    else if(named(n,'t')&&n.textContent!=='')last=n;
+  }
+  return last;
+}
+function firstText(p){var t=texts(p);return t.length?t[0].textContent:''}
+
+function closestP(n){while(n&&!named(n,'p'))n=n.parentNode;return n}
+function realContent(el){return Array.prototype.some.call(el.childNodes,function(c){return !(named(c,'rPr')||named(c,'pPr'))})}
+function splitParagraph(p){
+  var made=0;
+  for(var g=0;g<5000;g++){
+    var brs=p.getElementsByTagNameNS(W,'br'),br=null;
+    for(var i=0;i<brs.length;i++){
+      var t=brs[i].getAttributeNS(W,'type');
+      if((!t||t==='textWrapping')&&named(brs[i].parentNode,'r')&&closestP(brs[i].parentNode)===p){br=brs[i];break}
+    }
+    if(!br)break;
+    var np=p.cloneNode(false),pPr=null,k;
+    for(k=0;k<p.childNodes.length;k++)if(named(p.childNodes[k],'pPr'))pPr=p.childNodes[k];
+    if(pPr){
+      var pc=pPr.cloneNode(true),sp=pc.getElementsByTagNameNS(W,'sectPr');
+      while(sp.length)sp[0].parentNode.removeChild(sp[0]);
+      np.appendChild(pc);
+    }
+    var node=br,carry=null;
+    while(node.parentNode!==p){
+      var par=node.parentNode,cl=par.cloneNode(false);
+      if(named(par,'r')){for(k=0;k<par.childNodes.length;k++)if(named(par.childNodes[k],'rPr'))cl.appendChild(par.childNodes[k].cloneNode(true))}
+      if(carry)cl.appendChild(carry);
+      var s=node.nextSibling;
+      while(s){var n2=s.nextSibling;cl.appendChild(s);s=n2}
+      carry=realContent(cl)?cl:null;
+      node=par;
+    }
+    if(carry)np.appendChild(carry);
+    var s2=node.nextSibling;
+    while(s2){var n3=s2.nextSibling;np.appendChild(s2);s2=n3}
+    br.parentNode.removeChild(br);
+    p.parentNode.insertBefore(np,p.nextSibling);
+    p=np;made++;
+  }
+  return made;
+}
+
+function inRun(n){return named(n.parentNode,'r')}
+function isStop(n){return inRun(n)&&(named(n,'tab')||named(n,'br')||named(n,'cr')||named(n,'drawing')||named(n,'pict')||named(n,'object')||named(n,'fldChar')||named(n,'sym'))}
+function fixSpaces(p,o,st){
+  var els=Array.prototype.slice.call(p.getElementsByTagName('*')),prev=false,i,n,v,nv;
+  if(o.spaces){
+    for(i=0;i<els.length;i++){
+      n=els[i];
+      if(named(n,'t')){
+        v=n.textContent;if(v==='')continue;
+        nv=v.replace(/ {2,}/g,' ');
+        if(prev&&nv.charAt(0)===' ')nv=nv.slice(1);
+        if(nv!==v){st.space+=v.length-nv.length;setT(n,nv)}
+        if(nv!=='')prev=nv.slice(-1)===' ';
+      }else if(isStop(n))prev=false;
+    }
+  }
+  if(o.trim){
+    for(i=0;i<els.length;i++){
+      n=els[i];
+      if(named(n,'t')){
+        v=n.textContent;if(v==='')continue;
+        nv=v.replace(/^ +/,'');
+        if(nv!==v){st.space+=v.length-nv.length;setT(n,nv)}
+        if(nv!=='')break;
+      }else if(isStop(n))break;
+    }
+    for(i=els.length-1;i>=0;i--){
+      n=els[i];
+      if(named(n,'t')){
+        v=n.textContent;if(v==='')continue;
+        nv=v.replace(/ +$/,'');
+        if(nv!==v){st.space+=v.length-nv.length;setT(n,nv)}
+        if(nv!=='')break;
+      }else if(isStop(n))break;
+    }
+  }
+}
+
+function clean(xml,o){
+  var doc=new DOMParser().parseFromString(xml,'application/xml');
+  if(doc.getElementsByTagName('parsererror').length)throw new Error('Could not read document.xml.');
+  var st={lines:0,join:0,soft:0,blank:0,space:0};
+  var body=doc.getElementsByTagNameNS(W,'body')[0];
+
+  if(o.lines){
+    Array.prototype.slice.call(doc.getElementsByTagNameNS(W,'p')).forEach(function(p){st.lines+=splitParagraph(p)});
+  }
+
+  if(o.blank){
+    var ps=Array.prototype.slice.call(doc.getElementsByTagNameNS(W,'p'));
+    ps.forEach(function(p){
+      var par=p.parentNode;
+      if(!par||!isBlank(p))return;
+      var ok=named(par,'body')||(named(par,'tc')&&p.nextElementSibling);
+      if(ok){par.removeChild(p);st.blank++}
+    });
+  }
+
+  if(o.join||o.hard){
+    var all=Array.prototype.slice.call(doc.getElementsByTagNameNS(W,'p'));
+    all.forEach(function(p){
+      if(!p.parentNode)return;
+      for(var guard=0;guard<500;guard++){
+        var nx=p.nextElementSibling;
+        if(!nx||!named(nx,'p')||hasSect(p))break;
+        var li=lastItem(p),kind=null;
+        if(!li)break;
+        if(named(li,'softHyphen')&&o.join)kind='el';
+        else if(named(li,'t')){
+          var tx=li.textContent;
+          if(/\u00AD$/.test(tx)&&o.join)kind='char';
+          else if(o.hard&&/[\p{L}]-$/u.test(tx)&&/^\p{Ll}/u.test(firstText(nx)))kind='hard';
+        }
+        if(!kind)break;
+        if(kind==='el')li.parentNode.removeChild(li);
+        else setT(li,li.textContent.slice(0,-1));
+        var c=nx.firstChild;
+        while(c){var nxt=c.nextSibling;if(!named(c,'pPr'))p.appendChild(c);c=nxt}
+        nx.parentNode.removeChild(nx);
+        st.join++;
+      }
+    });
+  }
+
+  if(o.soft){
+    var sh=Array.prototype.slice.call(doc.getElementsByTagNameNS(W,'softHyphen'));
+    sh.forEach(function(e){e.parentNode.removeChild(e);st.soft++});
+    Array.prototype.forEach.call(doc.getElementsByTagNameNS(W,'t'),function(t){
+      var m=t.textContent.match(/\u00AD/g);
+      if(m){st.soft+=m.length;setT(t,t.textContent.replace(/\u00AD/g,''))}
+    });
+  }
+  if(o.spaces||o.trim){
+    Array.prototype.slice.call(doc.getElementsByTagNameNS(W,'p')).forEach(function(p){fixSpaces(p,o,st)});
+  }
+  var out=new XMLSerializer().serializeToString(doc);
+  if(!/^<\?xml/.test(out))out='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'+out;
+  return {xml:out,st:st};
+}
+
+$('go').addEventListener('click',async function(){
+  if(!file)return;
+  if(typeof JSZip==='undefined'){setStatus('The zip library did not load. Check your connection and reload.','err');return}
+  var o={lines:$('oLines').checked,join:$('oJoin').checked,soft:$('oSoft').checked,blank:$('oBlank').checked,spaces:$('oSpace').checked,trim:$('oTrim').checked,hard:$('oHard').checked};
+  if(!o.lines&&!o.join&&!o.soft&&!o.blank&&!o.spaces&&!o.trim&&!o.hard){setStatus('Select at least one option.','err');return}
+  $('go').disabled=true;setStatus('Cleaning…');
+  try{
+    var zip=await JSZip.loadAsync(await file.arrayBuffer());
+    var entry=zip.file('word/document.xml');
+    if(!entry)throw new Error('This does not look like a Word document.');
+    var r=clean(await entry.async('string'),o);
+    zip.file('word/document.xml',r.xml);
+    outBlob=await zip.generateAsync({type:'blob',compression:'DEFLATE',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+    outName=file.name.replace(/\.docx$/i,'')+'-cleaned.docx';
+    $('sLines').textContent=r.st.lines;$('sJoin').textContent=r.st.join;$('sSoft').textContent=r.st.soft;$('sBlank').textContent=r.st.blank;$('sSpace').textContent=r.st.space;
+    $('result').style.display='block';
+    setStatus('Done.','ok');
+  }catch(e){setStatus(e.message||'Something went wrong while cleaning.','err')}
+  $('go').disabled=false;
+});
+
+$('save').addEventListener('click',async function(){
+  if(!outBlob)return;
+  try{
+    var dl=window.claude&&await window.claude.use('downloads');
+    if(dl){await dl.save({filename:outName,data:outBlob});setStatus('Saved.','ok')}
+    else{
+      var a=document.createElement('a');a.href=URL.createObjectURL(outBlob);a.download=outName;
+      document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href)},4000);
+    }
+  }catch(e){if(!e||e.code!=='declined')setStatus('The file could not be saved: '+((e&&e.message)||'unknown error'),'err')}
+});
+})();
+</script>
+</body>
+</html>
