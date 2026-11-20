@@ -123,10 +123,6 @@
     .guide-preview a { color: var(--green); font-weight: 700; text-decoration: none; }
     .guide-preview a:hover { text-decoration: underline; }
     .site-footer { margin-top: 64px; padding: 25px 0 17px; border-top: 1px solid var(--line); color: #9ba8b8; }
-    .ad-placement { margin-top: 25px; padding: 12px; overflow-x: auto; border: 1px solid #2c394b; border-radius: 6px; background: #111a25; text-align: center; }
-    .ad-placement[hidden] { display: none; }
-    .ad-label { margin-bottom: 8px; color: #758397; font-size: 9px; letter-spacing: .7px; text-align: center; text-transform: uppercase; }
-    .adsbygoogle { display: block; min-height: 90px; }
     .footer-main { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 22px; }
     .footer-brand { display: flex; align-items: center; gap: 13px; }
     .footer-brand .brand-mark { transform: scale(.82); transform-origin: left center; }
@@ -358,10 +354,11 @@
             <button class="filter-btn active" type="button" data-filter="all" aria-pressed="true">All tools</button>
             <button class="filter-btn" type="button" data-filter="word" aria-pressed="false">Word tools</button>
             <button class="filter-btn" type="button" data-filter="pdf" aria-pressed="false">PDF tools</button>
+            <button class="filter-btn" type="button" data-filter="file" aria-pressed="false">File tools</button>
             <button class="filter-btn" type="button" data-filter="html" aria-pressed="false">HTML tools</button>
             <button class="filter-btn" type="button" data-filter="audio" aria-pressed="false">Audio tools</button>
           </div>
-          <span class="tool-count" id="tool-count">8 tools</span>
+          <span class="tool-count" id="tool-count">9 tools</span>
         </div>
         <div class="tool-grid">
           <button class="tool-card" id="cleaner-launch" data-tool-category="word" data-tool-search="malayalam docx cleaner word normalize unicode" style="--card-accent:#60c9d6" type="button" aria-haspopup="dialog">
@@ -406,6 +403,12 @@
             <strong>File Converter</strong>
             <small>Convert PDFs, documents, spreadsheets, text, and images.</small>
           </button>
+          <a class="tool-card" data-tool-category="file" data-tool-search="batch file renamer folder rename pattern extension zip serial number" style="--card-accent:#7da0ef" href="./batch-file-renamer.html">
+            <span class="tool-icon"><img class="tool-art" src="file-converter-art.svg" alt=""></span>
+            <span class="tool-kicker">File tools</span>
+            <strong>Batch File Renamer</strong>
+            <small>Preview and rename a folder of files using a pattern.</small>
+          </a>
           <a class="tool-card" data-tool-category="audio" data-tool-search="audio converter mp4 mp3 wav flac alac trim volume fade video sound" style="--card-accent:#4dbba4" href="./audio%20converter%20(1).html">
             <span class="tool-icon"><img class="tool-art" src="audio-converter-art.svg" alt=""></span>
             <span class="tool-kicker">Audio tools</span>
@@ -419,10 +422,6 @@
         <h2 id="guide-preview-title">Get better results from your files</h2>
         <p>Learn how to choose a tool, prepare files, understand conversion limits, and check your results. <a href="./guides.html">Read the Tool Hub guides</a>.</p>
       </section>
-      <aside class="ad-placement" id="ad-placement" aria-label="Advertisement" hidden>
-        <div class="ad-label">Advertisement</div>
-        <ins class="adsbygoogle" id="toolhub-ad-unit" style="display:inline-block;width:728px;height:90px"></ins>
-      </aside>
     </main>
     <footer class="site-footer">
       <div class="footer-main">
@@ -460,9 +459,7 @@
   <div class="consent-root" id="google-consent-root"></div>
   <script>
     window.toolHubGoogleConfig = {
-      analyticsMeasurementId: 'G-XC13PFGD2F',
-      adsensePublisherId: 'ca-pub-2068362554953585',
-      adsenseSlotId: '5028118829'
+      analyticsMeasurementId: 'G-XC13PFGD2F'
     };
     const requestedTool = new URLSearchParams(window.location.search).get('tool');
     window.toolHubPage = ['cleaner', 'pdf', 'html', 'image', 'file-converter'].includes(requestedTool) ? requestedTool : '';

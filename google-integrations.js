@@ -3,21 +3,16 @@
   const root = document.getElementById('google-consent-root');
   const storageKey = 'tool-hub-google-consent-v1';
   const analyticsId = /^G-[A-Z0-9]+$/i.test(config.analyticsMeasurementId || '') ? config.analyticsMeasurementId : '';
-  const publisherId = /^ca-pub-\d+$/.test(config.adsensePublisherId || '') ? config.adsensePublisherId : '';
-  const adSlotId = /^\d+$/.test(config.adsenseSlotId || '') ? config.adsenseSlotId : '';
-  const hasAnalytics = Boolean(analyticsId);
-  const hasAds = Boolean(publisherId && adSlotId);
   let consent = readConsent();
   let analyticsLoaded = false;
-  let adsLoaded = false;
 
   window.dataLayer = window.dataLayer || [];
   window.gtag = window.gtag || function gtag() { window.dataLayer.push(arguments); };
   window.gtag('consent', 'default', {
+    analytics_storage: 'denied',
     ad_storage: 'denied',
     ad_user_data: 'denied',
     ad_personalization: 'denied',
-    analytics_storage: 'denied',
     functionality_storage: 'granted',
     security_storage: 'granted',
     wait_for_update: 500
@@ -27,26 +22,25 @@
     event.preventDefault();
     showPreferences();
   }));
+
   if (window.location.hash === '#cookie-settings') showPreferences();
-  else if (!consent && (hasAnalytics || hasAds)) showBanner();
-  else if (consent) activateIntegrations();
+  else if (!consent && analyticsId) showBanner();
+  else if (consent) activateAnalytics();
 
   function readConsent() {
     try {
       const saved = JSON.parse(localStorage.getItem(storageKey));
-      if (saved && typeof saved.analytics === 'boolean' && typeof saved.ads === 'boolean') return saved;
-    } catch {
-      return null;
-    }
+      if (saved && typeof saved.analytics === 'boolean') return { analytics: saved.analytics };
+    } catch {}
     return null;
   }
 
   function showBanner() {
     root.innerHTML = `
-      <section class="consent-banner" aria-label="Optional cookie choices">
+      <section class="consent-banner" aria-label="Privacy choice">
         <div class="consent-copy">
           <strong>Privacy choices</strong>
-          <p>Optional Google Analytics and advertising tags stay off unless allowed. OCR images and text stay in your browser; AI proofreading is currently unavailable.</p>
+          <p>Optional Google Analytics stays off unless allowed. OCR images and text stay in your browser; AI proofreading is currently unavailable.</p>
         </div>
         <div class="consent-actions">
           <button type="button" data-consent="settings">Settings</button>
@@ -55,45 +49,42 @@
         </div>
       </section>`;
     root.querySelector('[data-consent="settings"]').addEventListener('click', showPreferences);
-    root.querySelector('[data-consent="reject"]').addEventListener('click', () => saveConsent(false, false));
-    root.querySelector('[data-consent="accept"]').addEventListener('click', () => saveConsent(true, true));
+    root.querySelector('[data-consent="reject"]').addEventListener('click', () => saveConsent(false));
+    root.querySelector('[data-consent="accept"]').addEventListener('click', () => saveConsent(true));
   }
 
   function showPreferences() {
-    const analyticsChecked = Boolean(consent && consent.analytics && hasAnalytics);
-    const adsChecked = Boolean(consent && consent.ads && hasAds);
+    const analyticsChecked = Boolean(consent && consent.analytics);
     root.innerHTML = `
       <section class="consent-banner" role="dialog" aria-label="Privacy preferences">
         <div class="consent-copy">
           <strong>Privacy preferences</strong>
-          <p>Choose which optional Google services may run. File processing remains on your device.</p>
+          <p>Choose whether optional Google Analytics may run. File processing remains on your device.</p>
           <div class="consent-options">
-            <label><input id="analytics-consent" type="checkbox" ${analyticsChecked ? 'checked' : ''} ${hasAnalytics ? '' : 'disabled'}><span>Google Analytics<small>${hasAnalytics ? 'Helps us understand site usage.' : 'Inactive until a valid G- measurement ID is configured.'}</small></span></label>
-            <label><input id="ads-consent" type="checkbox" ${adsChecked ? 'checked' : ''} ${hasAds ? '' : 'disabled'}><span>Google AdSense<small>${hasAds ? 'Allows advertising on this site.' : 'Inactive until valid publisher and ad-slot IDs are configured.'}</small></span></label>
+            <label><input id="analytics-consent" type="checkbox" ${analyticsChecked ? 'checked' : ''} ${analyticsId ? '' : 'disabled'}><span>Google Analytics<small>${analyticsId ? 'Helps us understand site usage.' : 'Inactive until a valid G- measurement ID is configured.'}</small></span></label>
           </div>
-          <p>For visitors in the EEA, UK, or Switzerland, configure a Google-certified consent management platform before serving ads.</p>
         </div>
         <div class="consent-actions">
           <button type="button" data-consent="cancel">Cancel</button>
           <button type="button" data-consent="reject">Reject optional</button>
-          <button class="primary" type="button" data-consent="save">Save choices</button>
+          <button class="primary" type="button" data-consent="save">Save choice</button>
         </div>
       </section>`;
     root.querySelector('[data-consent="cancel"]').addEventListener('click', restoreConsentView);
-    root.querySelector('[data-consent="reject"]').addEventListener('click', () => saveConsent(false, false));
+    root.querySelector('[data-consent="reject"]').addEventListener('click', () => saveConsent(false));
     root.querySelector('[data-consent="save"]').addEventListener('click', () => {
-      saveConsent(Boolean(root.querySelector('#analytics-consent')?.checked), Boolean(root.querySelector('#ads-consent')?.checked));
+      saveConsent(Boolean(root.querySelector('#analytics-consent')?.checked));
     });
     root.querySelector('#analytics-consent')?.focus();
   }
 
   function restoreConsentView() {
     root.replaceChildren();
-    if (!consent && (hasAnalytics || hasAds)) showBanner();
+    if (!consent && analyticsId) showBanner();
   }
 
-  function saveConsent(analytics, ads) {
-    consent = { analytics: Boolean(analytics && hasAnalytics), ads: Boolean(ads && hasAds), savedAt: new Date().toISOString() };
+  function saveConsent(analytics) {
+    consent = { analytics: Boolean(analytics && analyticsId), savedAt: new Date().toISOString() };
     try {
       localStorage.setItem(storageKey, JSON.stringify(consent));
     } catch {
@@ -102,17 +93,10 @@
     window.location.reload();
   }
 
-  function activateIntegrations() {
-    const analyticsAllowed = Boolean(consent.analytics && hasAnalytics);
-    const adsAllowed = Boolean(consent.ads && hasAds);
-    window.gtag('consent', 'update', {
-      analytics_storage: analyticsAllowed ? 'granted' : 'denied',
-      ad_storage: adsAllowed ? 'granted' : 'denied',
-      ad_user_data: adsAllowed ? 'granted' : 'denied',
-      ad_personalization: adsAllowed ? 'granted' : 'denied'
-    });
-    if (analyticsAllowed) loadAnalytics();
-    if (adsAllowed) loadAds();
+  function activateAnalytics() {
+    const allowed = Boolean(consent.analytics && analyticsId);
+    window.gtag('consent', 'update', { analytics_storage: allowed ? 'granted' : 'denied' });
+    if (allowed) loadAnalytics();
   }
 
   function loadAnalytics() {
@@ -124,25 +108,6 @@
     script.onload = () => {
       window.gtag('js', new Date());
       window.gtag('config', analyticsId);
-    };
-    document.head.append(script);
-  }
-
-  function loadAds() {
-    if (adsLoaded) return;
-    adsLoaded = true;
-    const placement = document.getElementById('ad-placement');
-    const adUnit = document.getElementById('toolhub-ad-unit');
-    if (!placement || !adUnit) return;
-    adUnit.setAttribute('data-ad-client', publisherId);
-    adUnit.setAttribute('data-ad-slot', adSlotId);
-    placement.hidden = false;
-    const script = document.createElement('script');
-    script.async = true;
-    script.crossOrigin = 'anonymous';
-    script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(publisherId)}`;
-    script.onload = () => {
-      (window.adsbygoogle = window.adsbygoogle || []).push({});
     };
     document.head.append(script);
   }
